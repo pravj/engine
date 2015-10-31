@@ -2,6 +2,7 @@
 
 import rethinkdb as r
 import threading
+from controller.controller import Controller
 
 TABLE_1 = 'id_store_1'
 TABLE_2 = 'id_store_2'
@@ -30,6 +31,10 @@ class Supplier:
 
 		self.caution_aware = False
 		self.slave_ready = False
+
+		# blocking function that makes us 'wait' for the 'master' to get full
+		self.controller = Controller(next(iter(self.master)))
+		self.controller.insert_data()
 
 		self.connect()
 

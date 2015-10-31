@@ -14,7 +14,7 @@ Series class implemets a sequential 'id' (of fixed length) generator
 """
 class Series:
 
-	def __init__(self, id_size=4, id_range, id_origin):
+	def __init__(self, id_origin, id_range, id_size=4):
 		self.id_size = id_size
 		self.id_range = id_range
 		self.id_origin = id_origin
