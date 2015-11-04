@@ -2,8 +2,9 @@
 
 import rethinkdb as r
 import threading
-from controller.controller import Controller
 import gevent
+from controller.controller import Controller
+from Queue import Queue
 
 TABLE_1 = 'id_store_1'
 TABLE_2 = 'id_store_2'
@@ -13,11 +14,14 @@ STATES = {'safe': 'SAFE', 'caution': 'CAUTION', 'danger': 'DANGER'}
 
 class Supplier:
 
-	def __init__(self, sample_size=20, store_size=100, caution_threshold=50):
+	def __init__(self, sample_size=100, store_size=20000, caution_threshold=15000):
 		self.connection = None
 
 		self.db = None
 		self.table = None
+
+		self.origin = 'Faaa'
+		self.response_queue = Queue()
 
 		self.tables = set([TABLE_1, TABLE_2])
 		self.master = set([TABLE_1])
@@ -71,20 +75,28 @@ class Supplier:
 		except Exception, e:
 			raise e
 
+	# invokes the filling process according to the system state
 	def call_controller(self, control_table=None):
 		table = next(iter(self.slave)) if control_table is None else control_table
 		print "call_controller %s" % (table)
 
 		if (self.controller == None):
+			print self.origin
 			print "no controller"
 			self.controller = Controller(table)
 			print "inserting data"
-			self.controller.insert_data()
+			self.origin = self.controller.insert_data(self.store_size, self.origin, queue=None)
+			print self.origin
 		else:
+			if (self.response_queue.qsize() != 0):
+				self.origin = self.response_queue.get()
+
+			print self.origin
+
 			print "shift control to table %s" % (table)
 			self.controller.shift_control(table)
 			print "start thread execution"
-			t = threading.Thread(target = self.controller.insert_data)
+			t = threading.Thread(target = self.controller.insert_data, args=(self.store_size, self.origin, self.response_queue, ))
 			t.start()
 
 	# checks if the 'slave' storage is ready to serve or not

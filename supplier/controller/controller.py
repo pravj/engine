@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from generator.generator import Series
+from random import shuffle
 import rethinkdb as r
 
 DATABASE = 'id_archive'
@@ -39,12 +40,22 @@ class Controller:
 		self.table = self.db.table(table)
 
 	# generate and insert elements of the series in bulk
-	def insert_data(self):
+	def insert_data(self, limit, origin, queue=None):
 		print 'start series insertion'
-		elements = Series('Faaa', 100, 4).elements()
+		elements = Series(origin, limit, 4).elements()
+
 		id_list = []
+		element = None
 
-		for i in range(100):
-			id_list.append({'id': elements.next()})
+		for i in range(limit):
+			element = elements.next()
+			id_list.append({'value': element})
 
+		for i in range(5):
+			shuffle(id_list)
 		self.table.insert(id_list).run(self.connection)
+
+		if (queue is None):
+			return element
+		else:
+			queue.put(element)
