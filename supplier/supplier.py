@@ -21,6 +21,7 @@ class Supplier:
 		self.table = None
 
 		self.origin = 'Faaa'
+
 		self.response_queue = Queue()
 
 		self.tables = set([TABLE_1, TABLE_2])
