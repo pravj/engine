@@ -3,6 +3,7 @@
 import rethinkdb as r
 import threading
 from controller.controller import Controller
+import gevent
 
 TABLE_1 = 'id_store_1'
 TABLE_2 = 'id_store_2'
@@ -12,7 +13,7 @@ STATES = {'safe': 'SAFE', 'caution': 'CAUTION', 'danger': 'DANGER'}
 
 class Supplier:
 
-	def __init__(self, sample_size=20, store_size=5000, caution_threshold=3000):
+	def __init__(self, sample_size=20, store_size=100, caution_threshold=50):
 		self.connection = None
 
 		self.db = None
@@ -30,11 +31,9 @@ class Supplier:
 		self.caution_threshold = caution_threshold
 
 		self.caution_aware = False
-		self.slave_ready = False
 
-		# blocking function that makes us 'wait' for the 'master' to get full
-		self.controller = Controller(next(iter(self.master)))
-		self.controller.insert_data()
+		self.controller = None
+		self.call_controller(next(iter(self.master)))
 
 		self.connect()
 
@@ -72,15 +71,53 @@ class Supplier:
 		except Exception, e:
 			raise e
 
+	def call_controller(self, control_table=None):
+		table = next(iter(self.slave)) if control_table is None else control_table
+		print "call_controller %s" % (table)
+
+		if (self.controller == None):
+			print "no controller"
+			self.controller = Controller(table)
+			print "inserting data"
+			self.controller.insert_data()
+		else:
+			print "shift control to table %s" % (table)
+			self.controller.shift_control(table)
+			print "start thread execution"
+			t = threading.Thread(target = self.controller.insert_data)
+			t.start()
+
+	# checks if the 'slave' storage is ready to serve or not
+	def slave_ready(self):
+		self.lock.acquire()
+
+		count = self.db.table(next(iter(self.slave))).count().run(self.connection)
+		answer = (count == self.store_size)
+
+		self.lock.release()
+
+		return answer
+
 	# query a set of 'id' documents and remove them
 	def query_id(self):
 		# using GIL approach
 		self.lock.acquire()
 
+		print self.master_state()
+
 		# 'master' in 'danger' zone but 'slave' storage not ready
-		if (not self.slave_ready and self.master_state() == STATES['danger']):
-			self.lock.release()
-			return []
+		if (self.master_state() == STATES['danger']):
+			print "'master' in 'danger' zone but 'slave' storage not ready"
+			if (not self.slave_ready()):
+				print "not slave ready"
+				self.lock.release()
+				return []
+			else:
+				print self.master, self.slave, self.caution_aware
+				self.master, self.slave = self.slave, self.master
+				self.table = self.db.table(next(iter(self.master)))
+				self.caution_aware = not(self.caution_aware)
+				print self.master, self.slave, self.caution_aware
 
 		try:
 			# collect documents of given sample size
@@ -107,12 +144,12 @@ class Supplier:
 		self.lock.acquire()
 		count = self.table.count().run(self.connection)
 
-		if (count < self.caution_threshold):
-			state = STATES['safe']
-		elif (self.caution_threshold <= count < self.store_size):
+		if (count == 0):
+			state = STATES['danger']
+		elif (count <= (self.store_size - self.caution_threshold)):
 			state = STATES['caution']
 		else:
-			state = STATES['danger']
+			state = STATES['safe']
 
 		self.lock.release()
 		return state
@@ -122,10 +159,12 @@ class Supplier:
 		self.lock.acquire()
 		state = self.master_state()
 
+		# in case the 'supplier' is not aware about the 'state'
 		if (state == STATES['caution']):
 			if (not self.caution_aware):
+				self.caution_aware = not(self.caution_aware)
+
 				# ask 'controller' to start filling process [gevent]
-				pass
-		elif (state == STATES['danger']):
-			# shuffle the storage
-			pass
+				self.call_controller()
+
+		self.lock.release()

@@ -41,11 +41,10 @@ class Controller:
 	# generate and insert elements of the series in bulk
 	def insert_data(self):
 		print 'start series insertion'
-		elements = Series('Faaa', 50, 4).elements()
+		elements = Series('Faaa', 100, 4).elements()
 		id_list = []
 
-		for i in range(50):
+		for i in range(100):
 			id_list.append({'id': elements.next()})
 
 		self.table.insert(id_list).run(self.connection)
-
