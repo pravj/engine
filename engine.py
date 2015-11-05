@@ -4,6 +4,11 @@ from supplier.supplier import Supplier
 
 supplier = Supplier()
 
+class MainHandler(tornado.web.RequestHandler):
+	def get(self):
+		self.write("Project Isha : Engine powered by tornado")
+
+# returns next IDs to collect
 class IdHandler(tornado.web.RequestHandler):
     def get(self):
     	ids = supplier.query_id()
@@ -11,9 +16,17 @@ class IdHandler(tornado.web.RequestHandler):
 
         self.write({'next': ids})
 
+# returns 'supplier' statistics
+class StatsHandler(tornado.web.RequestHandler):
+	def get(self):
+		res = "Project Isha : Item(s) shipped %d" % (supplier.count)
+		self.write(res)
+
 if __name__ == "__main__":
 	application = tornado.web.Application([
-	    (r"/", IdHandler),
+		(r"/", MainHandler),
+	    (r"/id", IdHandler),
+	    (r"/stats", StatsHandler),
 	])
 	application.listen(8888)
 	tornado.ioloop.IOLoop.current().start()
