@@ -27,6 +27,19 @@ class Series:
 
 	# returns alphabetical descendant of a 'string'
 	def generate_id(self, reference):
+		"""
+		New proposal for ID generation
+
+		@id_cursor : sequentially increasing ID
+
+		if (id_cursor > ''.join(sorted(id_cursor))):
+			IGNORE
+		elif (id_cursor == ''.join(sorted(id_cursor))):
+			ADD ALL ANAGRAMS
+		else:
+			IT WON'T HAPPEN
+		"""
+
 		length = len(reference)
 		if (length != self.id_size):
 			return False
