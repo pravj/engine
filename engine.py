@@ -7,7 +7,7 @@ supplier = None
 # returns index response
 class MainHandler(tornado.web.RequestHandler):
 	def get(self):
-		self.write("Project Isha : Engine powered by tornado")
+		self.write("Project Blitz : Engine powered by tornado")
 
 # returns next IDs to collect
 class IdHandler(tornado.web.RequestHandler):
@@ -20,7 +20,7 @@ class IdHandler(tornado.web.RequestHandler):
 # returns 'supplier' statistics
 class StatsHandler(tornado.web.RequestHandler):
 	def get(self):
-		res = "Project Isha : Item(s) shipped %d" % (supplier.count)
+		res = "Project Blitz : Item(s) shipped %d" % (supplier.count)
 		self.write(res)
 
 if __name__ == "__main__":

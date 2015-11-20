@@ -43,19 +43,21 @@ class Controller:
 	def insert_data(self, limit, origin, queue=None):
 		print 'start series insertion'
 		elements = Series(origin, limit, 4).elements()
+		print origin, limit
 
 		id_list = []
 		element = None
 
-		for i in range(limit):
-			element = elements.next()
-			id_list.append({'value': element})
+		count = 0
+		while (count < limit):
+			next, element_list = elements.next()
+			for element in element_list:
+				id_list.append({'value': element})
+				count += 1
 
-		for i in range(5):
-			shuffle(id_list)
 		self.table.insert(id_list).run(self.connection)
 
 		if (queue is None):
-			return element
+			return next
 		else:
-			queue.put(element)
+			queue.put(next)

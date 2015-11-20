@@ -20,7 +20,7 @@ class Supplier:
 		self.db = None
 		self.table = None
 
-		self.origin = 'Faaa'
+		self.origin = 'FagY'
 
 		self.response_queue = Queue()
 
@@ -87,6 +87,7 @@ class Supplier:
 			self.controller = Controller(table)
 			print "inserting data"
 			self.origin = self.controller.insert_data(self.store_size, self.origin, queue=None)
+			print 'after call'
 			print self.origin
 		else:
 			if (self.response_queue.qsize() != 0):

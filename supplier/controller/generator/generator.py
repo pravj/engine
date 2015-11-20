@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import string
+from itertools import permutations
 
 # using alphabets only
 chars = string.letters
@@ -26,20 +27,7 @@ class Series:
 			yield self.generate_id(self.id_cursor)
 
 	# returns alphabetical descendant of a 'string'
-	def generate_id(self, reference):
-		"""
-		New proposal for ID generation
-
-		@id_cursor : sequentially increasing ID
-
-		if (id_cursor > ''.join(sorted(id_cursor))):
-			IGNORE
-		elif (id_cursor == ''.join(sorted(id_cursor))):
-			ADD ALL ANAGRAMS
-		else:
-			IT WON'T HAPPEN
-		"""
-
+	def next_id(self, reference):
 		length = len(reference)
 		if (length != self.id_size):
 			return False
@@ -58,5 +46,16 @@ class Series:
 			new_char = chars[temp % len(chars)]
 			id = "%s%s" % (new_char, id)
 
-		self.id_cursor = id
 		return id
+
+	# returns alphabetical anagrams of a 'valid' string
+	# 'valid' string - which has not been part of a previous group
+	def generate_id(self, reference):
+		self.id_cursor = self.next_id(reference)
+		perms = []
+
+		if (reference == ''.join(sorted(reference))):
+			perms = list(set(map(''.join, permutations(reference))))
+			return self.id_cursor, perms
+		else:
+			return self.id_cursor, perms
