@@ -3,6 +3,7 @@
 from generator.generator import Series
 from random import shuffle
 import rethinkdb as r
+import string
 
 DATABASE = 'id_archive'
 
@@ -52,8 +53,9 @@ class Controller:
 		while (count < limit):
 			next, element_list = elements.next()
 			for element in element_list:
-				id_list.append({'value': element})
-				count += 1
+				if element[0] in string.ascii_uppercase:
+					id_list.append({'value': element})
+					count += 1
 
 		self.table.insert(id_list).run(self.connection)
 

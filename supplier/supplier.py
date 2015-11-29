@@ -2,7 +2,6 @@
 
 import rethinkdb as r
 import threading
-import gevent
 from controller.controller import Controller
 from Queue import Queue
 
@@ -14,13 +13,13 @@ STATES = {'safe': 'SAFE', 'caution': 'CAUTION', 'danger': 'DANGER'}
 
 class Supplier:
 
-	def __init__(self, sample_size=100, store_size=20000, caution_threshold=15000):
+	def __init__(self, sample_size=100, store_size=2000, caution_threshold=1500):
 		self.connection = None
 
 		self.db = None
 		self.table = None
 
-		self.origin = 'FagY'
+		self.origin = 'AAAA'
 
 		self.response_queue = Queue()
 
