@@ -1,6 +1,13 @@
-## Engine
+Engine
+======
+> Distributed identifier generation service
 
-'Engine' component of the 'isha' distributed system
+=
+> '**Engine**' is part of the project (code)named '**blitz**', which I'm coding in the dark nights.
+>
+> Write me to know more about the project or any help, *hackpravj [at] gmail [dot] com*
+>
+> You will be the first person hearing about it, once those dark nights ends.
 
 ## Components
 
@@ -28,6 +35,7 @@
 ### Generator
 
 * Generate sequential IDs
+* Uses a little *Group Theory* and properties of *Anagrams*
 
 ### Storage
 
