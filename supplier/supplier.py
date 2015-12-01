@@ -19,6 +19,8 @@ class Supplier:
 		self.db = None
 		self.table = None
 
+		self.fix_count = 0
+
 		self.origin = 'AAAA'
 
 		self.response_queue = Queue()
@@ -111,6 +113,20 @@ class Supplier:
 
 		return answer
 
+	# swap the 'master' and 'slave' storage
+	def swap_storage(self):
+		self.lock.acquire()
+
+		self.fix_count = 0
+
+		print self.master, self.slave, self.caution_aware
+		self.master, self.slave = self.slave, self.master
+		self.table = self.db.table(next(iter(self.master)))
+		self.caution_aware = not(self.caution_aware)
+		print self.master, self.slave, self.caution_aware
+
+		self.lock.release()
+
 	# query a set of 'id' documents and remove them
 	def query_id(self):
 		# using GIL approach
@@ -120,17 +136,18 @@ class Supplier:
 
 		# 'master' in 'danger' zone but 'slave' storage not ready
 		if (self.master_state() == STATES['danger']):
-			print "'master' in 'danger' zone but 'slave' storage not ready"
+			print "'master' in 'danger' zone"
 			if (not self.slave_ready()):
-				print "not slave ready"
+				print "'slave' not ready"
+
+				self.fix_count += 1
+				if (self.fix_count > 2):
+					self.swap_storage()
+
 				self.lock.release()
 				return []
 			else:
-				print self.master, self.slave, self.caution_aware
-				self.master, self.slave = self.slave, self.master
-				self.table = self.db.table(next(iter(self.master)))
-				self.caution_aware = not(self.caution_aware)
-				print self.master, self.slave, self.caution_aware
+				self.swap_storage()
 
 		try:
 			# collect documents of given sample size
